@@ -1,0 +1,53 @@
+{
+  "name": "connectify-android",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:sim": "node scripts/simulate-economy.mjs && node scripts/simulate-progression.mjs",
+    "sim:economy": "node scripts/simulate-economy.mjs",
+    "sim:progression": "node scripts/simulate-progression.mjs",
+    "cap:sync": "npm run build && npx cap sync android",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:icons": "node scripts/generate-android-icons.mjs",
+    "android:build": "node scripts/build-android.mjs --debug",
+    "android:debug": "node scripts/build-android.mjs --debug",
+    "android:release": "node scripts/build-android.mjs",
+    "android:key": "node scripts/create-signing-key.mjs",
+    "verify": "npm run typecheck && npm test && npm run test:sim && npm run build"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/haptics": "^8.0.0",
+    "@capacitor/splash-screen": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0",
+    "lucide-react": "^0.469.0",
+    "motion": "^12.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "fake-indexeddb": "^6.0.0",
+    "jsdom": "^25.0.1",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.11",
+    "vitest": "^2.1.8"
+  }
+}

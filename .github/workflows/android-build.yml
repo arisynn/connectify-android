@@ -1,0 +1,251 @@
+name: Build Connectify Android APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - 'feat/**'
+      - 'release/**'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'APK build mode (auto = debug + release signed/unsigned, release = release + debug, debug = debug only)'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - release
+          - debug
+      skip_qa:
+        description: 'Skip typecheck, unit tests, simulations, and Gradle release lint/tests'
+        required: false
+        default: false
+        type: boolean
+      publish_release:
+        description: 'Publish GitHub Release automatically when a signed release APK is built'
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: connectify-android-build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    name: Verify, Simulate & Build Connectify APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json', '**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Setup JDK 21 (Temurin)
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Setup Android SDK (Platform 36 & Build Tools 36.0.0)
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -name sdkmanager -type f | sort -V | tail -n 1)"
+          if [ -z "$SDKMANAGER" ]; then
+            echo "::error::sdkmanager not found under $SDK_ROOT/cmdline-tools"
+            exit 1
+          fi
+          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
+          echo "$SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses > /dev/null || true
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" \
+            "platforms;android-36" \
+            "build-tools;36.0.0" \
+            "platform-tools"
+          echo "$SDK_ROOT/build-tools/36.0.0" >> "$GITHUB_PATH"
+
+      - name: Install npm dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Run TypeScript Typecheck
+        if: ${{ inputs.skip_qa != true }}
+        run: npm run typecheck
+
+      - name: Run Vitest Unit & Integration Suites
+        if: ${{ inputs.skip_qa != true }}
+        run: npm test
+
+      - name: Run Economy & Progression Simulations
+        if: ${{ inputs.skip_qa != true }}
+        run: npm run test:sim
+
+      - name: Build Production Web Bundle & Sync Capacitor Android
+        run: |
+          set -euo pipefail
+          npm run cap:sync
+          if [ ! -f dist/index.html ]; then
+            echo "::error::dist/index.html was not produced by npm run cap:sync"
+            exit 1
+          fi
+          if [ ! -f android/app/src/main/assets/public/index.html ]; then
+            echo "::error::Capacitor sync failed to populate android/app/src/main/assets/public/index.html"
+            exit 1
+          fi
+          echo "Web bundle and Capacitor Android assets verified."
+
+      - name: Build Installable Debug APK & Release APK (Signed / Unsigned)
+        env:
+          INPUT_BUILD_TYPE: ${{ inputs.build_type || 'auto' }}
+          INPUT_SKIP_QA: ${{ inputs.skip_qa == true }}
+          KEYSTORE_BASE64: ${{ secrets.CONNECTIFY_KEYSTORE_BASE64 }}
+          SIGNING_JSON: ${{ secrets.CONNECTIFY_SIGNING_JSON }}
+          STORE_PASSWORD: ${{ secrets.CONNECTIFY_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.CONNECTIFY_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.CONNECTIFY_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          chmod +x android/gradlew
+          mkdir -p artifacts
+
+          VERSION="$(node -p "require('./app-version.json').version")"
+          VERSION_CODE="$(node -p "require('./app-version.json').versionCode")"
+          echo "APP_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "APP_VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+
+          MODE="$INPUT_BUILD_TYPE"
+          HAS_SIGNING="false"
+          if [ -n "$KEYSTORE_BASE64" ] && { [ -n "$SIGNING_JSON" ] || [ -n "$STORE_PASSWORD" ]; }; then
+            HAS_SIGNING="true"
+          fi
+          echo "HAS_SIGNING=$HAS_SIGNING" >> "$GITHUB_ENV"
+
+          BUILD_TOOLS_DIR="$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n 1)"
+          APKSIGNER="$BUILD_TOOLS_DIR/apksigner"
+
+          # 1. Always build & verify the installable Debug APK
+          echo "=== Building Installable Debug APK ==="
+          node scripts/build-android.mjs --debug --skip-sync
+          DEBUG_OUT="artifacts/Connectify-${VERSION}-debug.apk"
+          "$APKSIGNER" verify --verbose "$DEBUG_OUT"
+          echo "Installable Debug APK verified: $DEBUG_OUT"
+
+          # 2. Build Release APK (signed when secrets exist, aligned unsigned when secrets are absent)
+          if [ "$MODE" = "auto" ] || [ "$MODE" = "release" ]; then
+            echo "=== Building Release APK ==="
+            EXTRA_ARGS="--skip-sync"
+            if [ "$INPUT_SKIP_QA" = "true" ]; then
+              EXTRA_ARGS="$EXTRA_ARGS --skip-qa"
+            fi
+
+            if [ "$HAS_SIGNING" = "true" ]; then
+              SIGN_DIR="$RUNNER_TEMP/connectify-signing"
+              mkdir -p "$SIGN_DIR"
+              chmod 700 "$SIGN_DIR"
+              STORE_FILE="$SIGN_DIR/connectify-release.p12"
+              printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$STORE_FILE"
+              chmod 600 "$STORE_FILE"
+
+              if [ -n "$SIGNING_JSON" ]; then
+                printf '%s\n' "$SIGNING_JSON" > "$SIGN_DIR/signing.json"
+                chmod 600 "$SIGN_DIR/signing.json"
+              else
+                ALIAS_VAL="${KEY_ALIAS:-connectify}"
+                KEY_PASS_VAL="${KEY_PASSWORD:-$STORE_PASSWORD}"
+                node -e '
+                  const fs = require("node:fs");
+                  fs.writeFileSync(process.argv[1], JSON.stringify({
+                    storeFile: "connectify-release.p12",
+                    alias: process.argv[2],
+                    storePassword: process.argv[3],
+                    keyPassword: process.argv[4]
+                  }, null, 2) + "\n", { mode: 0o600 });
+                ' "$SIGN_DIR/signing.json" "$ALIAS_VAL" "$STORE_PASSWORD" "$KEY_PASS_VAL"
+              fi
+
+              CONNECTIFY_SIGNING_DIR="$SIGN_DIR" node scripts/build-android.mjs $EXTRA_ARGS
+              rm -rf "$SIGN_DIR"
+              echo "Signed Release APK ready: artifacts/Connectify-${VERSION}-release.apk"
+            else
+              if [ "$MODE" = "release" ]; then
+                echo "::warning::Release mode requested without signing secrets; building aligned unsigned release APK alongside installable debug APK."
+              fi
+              node scripts/build-android.mjs $EXTRA_ARGS
+              echo "Aligned Unsigned Release APK ready: artifacts/Connectify-${VERSION}-release-unsigned.apk"
+            fi
+          fi
+
+          ls -lh artifacts/
+
+      - name: Upload Connectify APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Connectify-Android-APK
+          path: |
+            artifacts/*.apk
+            artifacts/*.sha256
+            artifacts/*.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub Release (When Signed Release APK Is Built)
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.publish_release != false) || startsWith(github.ref, 'refs/tags/v') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="v${APP_VERSION}"
+          APK_FILE="artifacts/Connectify-${APP_VERSION}-release.apk"
+          SHA_FILE="${APK_FILE}.sha256"
+          INFO_FILE="artifacts/Connectify-release-info.json"
+          DEBUG_APK="artifacts/Connectify-${APP_VERSION}-debug.apk"
+          DEBUG_SHA="${DEBUG_APK}.sha256"
+
+          if [ ! -f "$APK_FILE" ]; then
+            echo "::notice::Signing secrets were not configured, so only Debug and Unsigned Release APKs were generated. Skipping automatic signed GitHub Release."
+            exit 0
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Updating existing GitHub Release $TAG..."
+            gh release upload "$TAG" "$APK_FILE" "$SHA_FILE" "$INFO_FILE" "$DEBUG_APK" "$DEBUG_SHA" --clobber
+          else
+            echo "Creating new GitHub Release $TAG..."
+            gh release create "$TAG" "$APK_FILE" "$SHA_FILE" "$INFO_FILE" "$DEBUG_APK" "$DEBUG_SHA" \
+              --title "Connectify Android ${TAG}" \
+              --generate-notes
+          fi

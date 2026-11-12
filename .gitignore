@@ -1,0 +1,47 @@
+# Dependencies & package artifacts
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Web build & test outputs
+dist/
+coverage/
+artifacts/
+*.tsbuildinfo
+
+# Environment variables & cryptographic secrets (NEVER commit)
+.env
+.env.*
+*.local
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.pem
+*.key
+signing.json
+*signing*/
+credentials.json
+google-services.json
+
+# Android / Gradle build artifacts & local SDK paths
+.gradle/
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+android/local.properties
+android/.idea/
+android/*.iml
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# OS & temporary files
+.DS_Store
+Thumbs.db
+*.tmp
+*.log

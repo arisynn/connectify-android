@@ -1,0 +1,551 @@
+/* Connectify Android — Game Feel, Particle, Onet & Match 3 Animations */
+
+/* ---------- Shared UI & Club Entrances ---------- */
+@keyframes club-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hint-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.58;
+    transform: scale(1.03);
+  }
+}
+
+/* ---------- GameParticles (Cosmetic Match Bursts) ---------- */
+.game-particles {
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+  z-index: 16;
+}
+
+.game-particles img {
+  position: absolute;
+  width: 19px;
+  height: 19px;
+  max-width: none;
+  object-fit: contain;
+  left: -9px;
+  top: -9px;
+  animation: particle-drift 0.46s ease-out both;
+}
+
+.game-particles.motion-orbit img {
+  animation-name: particle-orbit;
+}
+
+.game-particles.motion-pop img {
+  animation-name: particle-pop;
+  animation-timing-function: steps(5);
+}
+
+.game-particles.motion-bloom img {
+  animation-name: particle-bloom;
+}
+
+.game-particles.loop img {
+  animation-duration: 1.9s;
+  animation-iteration-count: infinite;
+}
+
+@keyframes particle-drift {
+  0% {
+    transform: translate(0, 0) scale(0.3);
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(var(--dx), calc(var(--dy) + 20px)) rotate(var(--spin)) scale(0.45);
+    opacity: 0;
+  }
+}
+
+@keyframes particle-orbit {
+  0% {
+    transform: rotate(-90deg) translateX(8px) scale(0.2);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(100deg) translate(var(--dx), var(--dy)) scale(0.8);
+    opacity: 0;
+  }
+}
+
+@keyframes particle-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(0.3);
+    opacity: 0;
+  }
+}
+
+@keyframes particle-bloom {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) rotate(60deg) scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* ---------- TileBurst & Shatter Shards ---------- */
+.tile-burst {
+  position: absolute;
+  z-index: 12;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.burst-ring {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  left: -17px;
+  top: -17px;
+  border: 2px solid;
+  border-radius: 50%;
+}
+
+.burst-particle {
+  position: absolute;
+  left: -3px;
+  top: -3px;
+  width: 7px;
+  height: 7px;
+  border: 1px solid #17233766;
+}
+
+.burst-shape-0 {
+  border-radius: 50%;
+}
+
+.burst-shape-1 {
+  clip-path: polygon(50% 0, 62% 36%, 100% 50%, 62% 64%, 50% 100%, 38% 64%, 0 50%, 38% 36%);
+  width: 12px;
+  height: 12px;
+  border: 0;
+}
+
+.burst-shape-2 {
+  border-radius: 2px;
+}
+
+.burst-shape-3 {
+  clip-path: polygon(50% 0, 100% 100%, 0 85%);
+}
+
+.image-shard {
+  position: absolute;
+}
+
+.image-shard img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.split-tile-half {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 8px;
+  pointer-events: none;
+}
+
+/* ---------- VictoryBurst Fullscreen Celebration ---------- */
+.victory-burst {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.victory-burst i {
+  position: absolute;
+  top: -20px;
+  width: 9px;
+  height: 15px;
+  border-radius: 2px;
+  animation: celebrate 2.3s cubic-bezier(0.15, 0.7, 0.45, 1) both;
+}
+
+.victory-burst.bitmap-burst i {
+  width: 25px;
+  height: 25px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  clip-path: none;
+  border-radius: 0;
+}
+
+.victory-burst.effect-stars i {
+  width: 17px;
+  height: 17px;
+  clip-path: polygon(
+    50% 0,
+    61% 34%,
+    98% 36%,
+    69% 58%,
+    80% 95%,
+    50% 75%,
+    20% 95%,
+    31% 58%,
+    2% 36%,
+    39% 34%
+  );
+}
+
+.victory-burst.effect-default i {
+  border-radius: 50%;
+  width: 8px;
+  height: 8px;
+}
+
+@keyframes celebrate {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(90dvh) rotate(340deg);
+    opacity: 0;
+  }
+}
+
+/* ---------- Onet Connect FX ---------- */
+.onet-cell {
+  transition: box-shadow 0.18s ease, background-color 0.18s ease;
+  will-change: transform, opacity;
+}
+
+.onet-cell.selected {
+  outline: 3.5px solid #f59e0b;
+  border-color: #d97706;
+  z-index: 5;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4), 2px 4px 0 var(--club-line, #273448);
+}
+
+.onet-cell.hinted {
+  outline: 3.5px solid #10b981;
+  border-color: #059669;
+  z-index: 4;
+  animation: hint-pulse 1s ease-in-out infinite;
+}
+
+.onet-cell.invalid {
+  outline: 3.5px solid #ef4444;
+  border-color: #ef4444;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
+}
+
+.onet-path-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 50;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.9));
+}
+
+.onet-combo {
+  position: absolute;
+  z-index: 60;
+  color: #087f87;
+  background: #ffffff;
+  border: 2px solid #172337;
+  border-radius: 12px;
+  padding: 5px 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  pointer-events: none;
+  font-size: 13px;
+  box-shadow: 2px 3px 0 #172337;
+}
+
+.onet-shuffling .onet-cell:not(.empty) {
+  animation: onet-shuffle-gather 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes onet-shuffle-gather {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  38% {
+    transform: scale(0.78) rotate(-6deg);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* ---------- Match 3 FX & Special Activations ---------- */
+.m3-tile {
+  will-change: transform, opacity;
+  transition: box-shadow 0.14s ease;
+}
+
+.m3-tile.selected {
+  z-index: 12;
+  outline: 3px solid #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35), 2px 4px 0 var(--club-line, #172337);
+}
+
+.m3-tile.hinted {
+  z-index: 10;
+  outline: 3px solid #10b981;
+  animation: hint-pulse 1s ease-in-out infinite;
+}
+
+.m3-tile-pop {
+  animation: m3-tile-pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes m3-tile-pop {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+    opacity: 1;
+  }
+  32% {
+    transform: scale(1.18);
+    filter: brightness(1.35);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.15) rotate(8deg);
+    filter: brightness(1.1);
+    opacity: 0;
+  }
+}
+
+.m3-special-spawn {
+  animation: m3-special-spawn 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes m3-special-spawn {
+  0% {
+    transform: scale(0.3);
+    filter: brightness(1.5);
+  }
+  60% {
+    transform: scale(1.28);
+    filter: brightness(1.25);
+  }
+  82% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.m3-line-beam-h {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 45;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.25), #ffffff 50%, rgba(244, 114, 182, 0.25));
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.85), 0 0 8px #ffffff;
+  animation: m3-line-blast-h 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.m3-line-beam-v {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 45;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.25), #ffffff 50%, rgba(244, 114, 182, 0.25));
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.85), 0 0 8px #ffffff;
+  animation: m3-line-blast-v 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes m3-line-blast-h {
+  0% {
+    transform: scaleX(0.1);
+    opacity: 0.95;
+  }
+  45% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1.02);
+    opacity: 0;
+  }
+}
+
+@keyframes m3-line-blast-v {
+  0% {
+    transform: scaleY(0.1);
+    opacity: 0.95;
+  }
+  45% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(1.02);
+    opacity: 0;
+  }
+}
+
+.m3-bomb-ring {
+  position: absolute;
+  pointer-events: none;
+  z-index: 46;
+  border-radius: 50%;
+  border: 4px solid #fbbf24;
+  box-shadow: 0 0 22px rgba(251, 191, 36, 0.75);
+  animation: m3-bomb-shockwave 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes m3-bomb-shockwave {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.8);
+    opacity: 0;
+  }
+}
+
+.m3-board-shake {
+  animation: m3-board-shake 0.14s linear both;
+}
+
+@keyframes m3-board-shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(-4px, 2px);
+  }
+  50% {
+    transform: translate(4px, -2px);
+  }
+  75% {
+    transform: translate(-3px, -1px);
+  }
+}
+
+.m3-combo-float {
+  position: absolute;
+  z-index: 55;
+  pointer-events: none;
+  animation: m3-combo-float 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes m3-combo-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 10px) scale(0.65);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -12px) scale(1.12);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -32px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -44px) scale(0.95);
+  }
+}
+
+/* ---------- Reduced Motion Accessibility ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .game-particles:not(.loop),
+  .tile-burst,
+  .victory-burst,
+  .bitmap-burst,
+  .m3-line-beam-h,
+  .m3-line-beam-v,
+  .m3-bomb-ring {
+    display: none !important;
+  }
+}
+
+[data-reduced-motion='true'] *,
+[data-reduced-motion='true'] *::before,
+[data-reduced-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+[data-reduced-motion='true'] .game-particles:not(.loop),
+[data-reduced-motion='true'] .tile-burst,
+[data-reduced-motion='true'] .victory-burst,
+[data-reduced-motion='true'] .m3-line-beam-h,
+[data-reduced-motion='true'] .m3-line-beam-v,
+[data-reduced-motion='true'] .m3-bomb-ring {
+  display: none !important;
+}

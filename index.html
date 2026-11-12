@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="id" style="background-color: #fffaf5;">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#fffaf5" />
+    <title>Connectify</title>
+
+    <link rel="icon" type="image/png" href="./art/brand/favicon.png" />
+    <link rel="preload" as="image" href="./art/brand/mark.webp" />
+
+    <style>
+      @font-face {
+        font-family: 'Fredoka';
+        font-style: normal;
+        font-weight: 400 700;
+        font-display: swap;
+        src: url('./fonts/fredoka-latin-wght.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Outfit';
+        font-style: normal;
+        font-weight: 400 900;
+        font-display: swap;
+        src: url('./fonts/outfit-latin-wght.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'JetBrains Mono';
+        font-style: normal;
+        font-weight: 500 700;
+        font-display: swap;
+        src: url('./fonts/jetbrains-mono-latin.woff2') format('woff2');
+      }
+
+      html,
+      body {
+        background-color: #fffaf5 !important;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100dvh;
+        overflow: hidden;
+        overscroll-behavior: none;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+      }
+
+      #static-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 999999;
+        background-color: #fffaf5;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        transition: opacity 0.25s ease, transform 0.25s ease;
+      }
+
+      .static-loader-bg {
+        position: absolute;
+        inset: 0;
+        opacity: 0.08;
+        pointer-events: none;
+        background-image: radial-gradient(circle at center, #172337 2px, transparent 2px);
+        background-size: 24px 24px;
+      }
+
+      .static-loader-logo-container {
+        width: 120px;
+        height: 120px;
+        margin-bottom: 28px;
+        position: relative;
+        z-index: 10;
+        animation: static-float 3s ease-in-out infinite;
+      }
+
+      .static-loader-card {
+        background-color: #ffffff;
+        border: 3px solid #172337;
+        border-radius: 1rem;
+        padding: 12px 24px;
+        box-shadow: 4px 5px 0px 0px #172337;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .static-loader-text {
+        font-family: 'Fredoka', system-ui, -apple-system, sans-serif;
+        font-weight: 700;
+        color: #172337;
+        font-size: 1.05rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin: 0;
+      }
+
+      .static-loader-progress-bar-container {
+        width: 196px;
+        height: 8px;
+        background-color: #e5e7eb;
+        border: 2px solid #172337;
+        border-radius: 9999px;
+        overflow: hidden;
+        margin-top: 2px;
+      }
+
+      .static-loader-progress-bar {
+        height: 100%;
+        width: 30%;
+        background-color: #ff6b8a;
+        border-radius: 9999px;
+        animation: static-progress 1.4s infinite linear;
+        transform-origin: left;
+      }
+
+      .static-loader-progress-bar.determinate {
+        animation: none !important;
+        transition: width 0.2s ease-out;
+      }
+
+      @keyframes static-float {
+        0%,
+        100% {
+          transform: translateY(0) rotate(-2deg);
+        }
+        50% {
+          transform: translateY(-10px) rotate(2deg);
+        }
+      }
+
+      @keyframes static-progress {
+        0% {
+          transform: translateX(-100%);
+          width: 30%;
+        }
+        50% {
+          width: 50%;
+        }
+        100% {
+          transform: translateX(350%);
+          width: 30%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="static-loader">
+      <div class="static-loader-bg"></div>
+      <div class="static-loader-logo-container">
+        <img
+          data-testid="boot-brand-mark"
+          src="./art/brand/mark.webp"
+          onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='./art/premium/brand/mark.webp';}"
+          alt="Connectify"
+          style="width: 100%; height: 100%; object-fit: contain;"
+        />
+      </div>
+      <div class="static-loader-card">
+        <h2 class="static-loader-text" id="static-loader-text">MEMUAT KLUB...</h2>
+        <div class="static-loader-progress-bar-container">
+          <div class="static-loader-progress-bar" id="static-loader-progress"></div>
+        </div>
+        <div
+          id="static-loader-error"
+          style="color: #ef4444; font-size: 12px; margin-top: 4px; font-weight: 700; text-align: center; max-width: 220px;"
+        ></div>
+        <button
+          id="static-loader-retry"
+          style="display: none; margin-top: 8px; background: #ff6b8a; color: #ffffff; padding: 6px 14px; border-radius: 9999px; font-weight: 700; border: 2px solid #172337; cursor: pointer;"
+        >
+          MUAT ULANG
+        </button>
+      </div>
+    </div>
+
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+
+    <script>
+      (function () {
+        var errorText = document.getElementById('static-loader-error');
+        var retryBtn = document.getElementById('static-loader-retry');
+        var progressBar = document.getElementById('static-loader-progress');
+        window._loaderReady = false;
+
+        window.addEventListener('error', function (e) {
+          if (errorText && !window._loaderReady) {
+            errorText.innerText = 'Gagal memuat modul: ' + (e.message || 'Unknown error');
+          }
+        });
+
+        window.addEventListener('unhandledrejection', function (e) {
+          if (errorText && !window._loaderReady) {
+            errorText.innerText = 'Gagal memuat modul: ' + (e.reason || 'Promise rejected');
+          }
+        });
+
+        if (retryBtn) {
+          retryBtn.addEventListener('click', function () {
+            window.location.reload();
+          });
+        }
+
+        setTimeout(function () {
+          if (!window._loaderReady) {
+            if (progressBar) progressBar.style.animation = 'none';
+            if (errorText) errorText.innerText = 'Gagal menginisialisasi paket lokal.';
+            if (retryBtn) retryBtn.style.display = 'block';
+          }
+        }, 8000);
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Connectify</string>
+    <string name="title_activity_main">Connectify</string>
+    <string name="package_name">com.connectify.android</string>
+    <string name="custom_url_scheme">com.connectify.android</string>
+</resources>
