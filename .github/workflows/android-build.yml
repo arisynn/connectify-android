@@ -106,14 +106,6 @@ jobs:
         if: ${{ inputs.skip_qa != true }}
         run: npm run typecheck
 
-      - name: Run Vitest Unit & Integration Suites
-        if: ${{ inputs.skip_qa != true }}
-        run: npm test
-
-      - name: Run Economy & Progression Simulations
-        if: ${{ inputs.skip_qa != true }}
-        run: npm run test:sim
-
       - name: Build Production Web Bundle & Sync Capacitor Android
         run: |
           set -euo pipefail
@@ -127,6 +119,14 @@ jobs:
             exit 1
           fi
           echo "Web bundle and Capacitor Android assets verified."
+
+      - name: Run Vitest Unit & Integration Suites
+        if: ${{ inputs.skip_qa != true }}
+        run: npm test
+
+      - name: Run Economy & Progression Simulations
+        if: ${{ inputs.skip_qa != true }}
+        run: npm run test:sim
 
       - name: Build Installable Debug APK & Release APK (Signed / Unsigned)
         env:
